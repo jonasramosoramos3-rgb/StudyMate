@@ -1,0 +1,51 @@
+{
+  "name": "StudyMate - All-in-One Student Toolkit",
+  "short_name": "StudyMate",
+  "description": "StudyMate: File converter + OCR + GPA with FIXED screenshot OCR + Dictionary EN+Tagalog + Thesaurus ALL words + Audio converter + Paraphraser + Quiz Scanner. 100% offline, 24 tools, free forever.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "background_color": "#fcfcff",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "categories": [
+    "education",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "File Converter",
+      "url": "./index.html",
+      "description": "Convert any file offline"
+    },
+    {
+      "name": "ID Photo Maker",
+      "url": "./index.html",
+      "description": "Make 2x2 ID photos"
+    },
+    {
+      "name": "Study Tools",
+      "url": "./index.html",
+      "description": "GPA, Citation, Flashcards"
+    }
+  ]
+}
