@@ -1,0 +1,17 @@
+{
+  "name": "studymate",
+  "version": "3.0.0",
+  "private": true,
+  "description": "StudyMate - offline student toolkit PWA, plus a standalone single-file accounting worksheet",
+  "scripts": {
+    "test": "node tools/build-standalone.js --check && node --test tests/*.test.js",
+    "test:only": "node --test tests/*.test.js",
+    "build": "node tools/build-standalone.js",
+    "serve": "python3 -m http.server 8000 --bind 0.0.0.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^30.1.1",
+    "jszip": "^3.10.2"
+  }
+}
