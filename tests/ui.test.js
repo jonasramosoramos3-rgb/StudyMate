@@ -280,3 +280,62 @@ test("dropping a .csv journal works too", async () => {
   assert.equal(m.balanceSheet.balanced, true);
   assert.match($("#acctStatus").textContent, /Loaded july.csv - 4 journal lines/);
 });
+
+test("cash flow tab switches between indirect, direct and both", async () => {
+  const { window, document, $ } = await bootApp();
+  document.querySelector('[data-tool="accounting"]').click();
+  await sleep(250);
+  $("#acctSample").click();
+  $("#acctRun").click();
+  await sleep(80);
+
+  const tab = Array.from(document.querySelectorAll(".acct-tab")).find(b => b.textContent.includes("Cash Flows"));
+  tab.click();
+  await sleep(20);
+  assert.match($("#acctTabBody").textContent, /Indirect Method/);
+  assert.match($("#acctTabBody").textContent, /Depreciation and amortization expense/);
+
+  const pick = label => {
+    const b = Array.from(document.querySelectorAll("[data-cf]")).find(x => x.textContent.trim() === label);
+    assert.ok(b, `cash flow toggle "${label}" exists`);
+    b.click();
+  };
+
+  pick("Direct method");
+  await sleep(20);
+  const direct = $("#acctTabBody").textContent;
+  assert.match(direct, /Direct Method/);
+  assert.match(direct, /Cash receipts from:/);
+  assert.match(direct, /₱42,500\.00/);
+  assert.match(direct, /Total cash payments/);
+  assert.doesNotMatch(direct, /Depreciation and amortization/);
+  assert.doesNotMatch(direct, /Net Income/);
+  assert.equal(window.StudyMateAccountingUI.STATE.cfMethod, "direct");
+
+  pick("Both");
+  await sleep(20);
+  const both = $("#acctTabBody").textContent;
+  assert.match(both, /Indirect Method/);
+  assert.match(both, /Direct Method/);
+  assert.match(both, /Net cash provided by operating activities/);
+});
+
+test("no template artefacts leak into the rendered tabs", async () => {
+  const { document, $ } = await bootApp();
+  document.querySelector('[data-tool="accounting"]').click();
+  await sleep(250);
+  $("#acctSample").click();
+  $("#acctRun").click();
+  await sleep(80);
+
+  const bad = [];
+  document.querySelectorAll(".acct-tab").forEach(t => {
+    t.click();
+    const html = $("#acctTabBody").innerHTML;
+    if (/undefined|NaN|\[object Object\]|\bnull\b/.test(html)) bad.push(t.textContent.trim());
+  });
+  assert.deepEqual(bad, [], "every tab renders clean markup");
+  const journal = Array.from(document.querySelectorAll(".acct-tab")).find(b => b.textContent.includes("Journal"));
+  journal.click();
+  assert.match($("#acctTabBody").textContent, /Total \(13 entries\)\s*₱320,700.00\s*=\s*₱320,700.00/);
+});

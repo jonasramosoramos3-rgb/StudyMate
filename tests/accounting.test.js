@@ -558,6 +558,151 @@ test("plain-text report renders every statement", () => {
   assert.ok(!/\[ERROR\]/.test(txt));
 });
 
+test("direct method: cash receipts and payments traced from the journal", () => {
+  const m = sampleModel(true);
+  const d = m.cashFlowDirect;
+  assert.equal(d.method, "direct");
+  assert.equal(d.flows.customers, 42500);   // 18,500 + 15,000 + 9,000 collections
+  assert.equal(d.flows.employees, -14000);
+  assert.equal(d.flows.opex, -26700);       // prepaid 12,000 + utilities 3,200 + rent 9,000 + advertising 2,500
+  assert.equal(d.flows.suppliers, 0);       // supplies were bought on account
+  assert.equal(d.receipts, 42500);
+  assert.equal(d.payments, -40700);
+  assert.equal(d.operatingTraced, 1800);
+  assert.equal(d.reconciliation, 0, "nothing left over to reconcile");
+  assert.equal(d.operating, m.cashFlow.operating, "agrees with the indirect method");
+  assert.equal(d.investing, -48000);
+  assert.equal(d.financing, 145000);
+  assert.equal(d.netChange, 98800);
+  assert.equal(d.endCash, 98800);
+  assert.equal(d.ties, true);
+  // the operating detail rows are the direct-method ones, not the add-backs
+  assert.ok(d.rows.some(r => r.label === "Customers" && r.amount === 42500));
+  assert.ok(d.rows.some(r => r.label === "Total cash receipts"));
+  assert.ok(!d.rows.some(r => /^Net Income$/.test(r.label)), "no net income line in the direct method");
+  assert.ok(!d.rows.some(r => /Depreciation and amortization/.test(r.label)), "no depreciation add-back in the direct method");
+  // investing and financing are copied through so both statements match
+  assert.ok(d.rows.some(r => r.label === "INVESTING ACTIVITIES"));
+  assert.ok(d.rows.some(r => r.label === "FINANCING ACTIVITIES"));
+  assert.ok(d.rows.some(r => /Purchase of Office Equipment/.test(r.label)));
+});
+
+test("direct method on a merchandising business", () => {
+  const p = A.parseJournalText([
+    "Date\tAccount\tDebit\tCredit",
+    "2025-01-01\tCash\t100000\t",
+    "2025-01-01\tOwner's Capital\t\t100000",
+    "2025-01-04\tMerchandise Inventory\t20000\t",
+    "2025-01-04\tAccounts Payable\t\t20000",
+    "2025-01-10\tCash\t30000\t",
+    "2025-01-10\tSales\t\t30000",
+    "2025-01-10\tCost of Goods Sold\t12000\t",
+    "2025-01-10\tMerchandise Inventory\t\t12000",
+    "2025-01-15\tSales Returns and Allowances\t1000\t",
+    "2025-01-15\tCash\t\t1000",
+    "2025-01-16\tAccounts Payable\t20000\t",
+    "2025-01-16\tCash\t\t20000",
+    "2025-01-20\tSalaries Expense\t5000\t",
+    "2025-01-20\tCash\t\t5000",
+    "2025-01-31\tIncome Tax Expense\t2000\t",
+    "2025-01-31\tCash\t\t2000"
+  ].join("\n"));
+  const m = A.buildModel({ lines: p.lines, entries: p.entries });
+  const d = m.cashFlowDirect;
+  assert.equal(d.flows.customers, 29000);      // 30,000 sales less 1,000 returns
+  assert.equal(d.flows.suppliers, -20000);     // paying off the trade payable
+  assert.equal(d.flows.employees, -5000);
+  assert.equal(d.flows.taxes, -2000);
+  assert.equal(d.operating, m.cashFlow.operating);
+  assert.equal(d.operating, 2000);             // 29,000 - 20,000 - 5,000 - 2,000
+  assert.equal(d.reconciliation, 0);
+  assert.equal(d.netChange, 102000);
+  assert.equal(d.ties, true);
+  assert.ok(d.rows.some(r => r.label === "Income taxes"));
+});
+
+test("direct method splits a compound entry between investing and operating", () => {
+  const p = A.parseJournalText([
+    "Date\tAccount\tDebit\tCredit",
+    "2025-01-01\tCash\t100000\t",
+    "2025-01-01\tOwner's Capital\t\t100000",
+    "2025-01-09\tEquipment\t10000\t",
+    "2025-01-09\tRepairs Expense\t500\t",
+    "2025-01-09\tCash\t\t10500"
+  ].join("\n"));
+  const m = A.buildModel({ lines: p.lines, entries: p.entries });
+  const d = m.cashFlowDirect;
+  assert.equal(d.flows.opex, -500);
+  assert.equal(d.flows.investing, -10000);
+  assert.equal(d.flows.financing, 100000);
+  assert.equal(d.operating, -500);
+  assert.equal(d.reconciliation, 0);
+  assert.equal(d.netChange, 89500);
+  assert.equal(d.ties, true);
+});
+
+test("a transfer between two cash accounts nets to zero in the direct method", () => {
+  const p = A.parseJournalText([
+    "Date\tAccount\tDebit\tCredit",
+    "2025-01-01\tCash\t50000\t",
+    "2025-01-01\tOwner's Capital\t\t50000",
+    "2025-01-02\tPetty Cash Fund\t5000\t",
+    "2025-01-02\tCash\t\t5000"
+  ].join("\n"));
+  const m = A.buildModel({ lines: p.lines, entries: p.entries });
+  const d = m.cashFlowDirect;
+  assert.equal(d.flows.other, 0);
+  assert.equal(d.flows.financing, 50000);
+  assert.equal(d.operating, 0);
+  assert.equal(m.balanceSheet.totalCash, 50000);
+  assert.equal(d.netChange, 50000);
+  assert.equal(d.ties, true);
+});
+
+test("directBucket routes counterparties to the right line", () => {
+  const cases = [
+    ["Accounts Receivable", "customers"],
+    ["Service Revenue", "customers"],
+    ["Unearned Service Revenue", "customers"],
+    ["Sales Returns and Allowances", "customers"],
+    ["Accounts Payable", "suppliers"],
+    ["Merchandise Inventory", "suppliers"],
+    ["Cost of Goods Sold", "suppliers"],
+    ["Freight-In", "suppliers"],
+    ["Salaries Expense", "employees"],
+    ["Salaries Payable", "employees"],
+    ["SSS Payable", "employees"],
+    ["Utilities Expense", "opex"],
+    ["Prepaid Insurance", "opex"],
+    ["Interest Expense", "interestPaid"],
+    ["Income Tax Expense", "taxes"],
+    ["Income Tax Payable", "taxes"],
+    ["Interest Revenue", "interestReceived"],
+    ["Equipment", "investing"],
+    ["Accumulated Depreciation - Equipment", "investing"],
+    ["Owner's Capital", "financing"],
+    ["Owner's Drawings", "financing"],
+    ["Bonds Payable", "financing"],
+    ["Zzz Mystery Thing", "other"]
+  ];
+  for (const [name, expected] of cases) {
+    const account = A.classifyAccount(name);
+    assert.equal(A.directBucket(name, { type: account.type, subtype: account.subtype }), expected, `${name} -> ${expected}`);
+  }
+});
+
+test("exports include the direct-method statement", () => {
+  const m = sampleModel(true);
+  const csv = A.statementToCSV(m, "cash-flow-direct");
+  assert.match(csv, /STATEMENT OF CASH FLOWS - DIRECT METHOD/);
+  assert.match(csv, /^Customers,42500.00$/m);
+  assert.match(csv, /^Total cash receipts,42500.00$/m);
+  const txt = A.toTextReport(m, { company: "Test Co", totalDebit: 1, totalCredit: 1 });
+  assert.ok(txt.includes("STATEMENT OF CASH FLOWS (DIRECT METHOD)"));
+  assert.ok(txt.includes("STATEMENT OF CASH FLOWS (INDIRECT METHOD)"));
+  assert.ok(txt.includes("Both methods agree"));
+});
+
 test("money formatting", () => {
   assert.equal(A.fmtMoney(1234.5, { currency: "PHP" }), "₱1,234.50");
   assert.equal(A.fmtMoney(-1234.5, { currency: "PHP" }), "(₱1,234.50)");

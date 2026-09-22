@@ -14,7 +14,7 @@
     journal: "", adjustments: "", opening: "",
     company: "My Company", period: "", currency: "PHP", entity: "auto", base: "adjusted",
     overrides: {},
-    parsed: null, adjParsed: null, model: null, tab: "income-statement"
+    parsed: null, adjParsed: null, model: null, tab: "income-statement", cfMethod: "indirect"
   };
 
   const TABS = [
@@ -35,7 +35,7 @@
       localStorage.setItem(LS_KEY, JSON.stringify({
         journal: STATE.journal, adjustments: STATE.adjustments, opening: STATE.opening,
         company: STATE.company, period: STATE.period, currency: STATE.currency,
-        entity: STATE.entity, base: STATE.base, overrides: STATE.overrides
+        entity: STATE.entity, base: STATE.base, overrides: STATE.overrides, cfMethod: STATE.cfMethod
       }));
     } catch (e) { /* private mode */ }
   }
@@ -50,6 +50,7 @@
 
   /* ---------------- formatting ---------------- */
   function money(v) { return A.fmtMoney(v, { currency: STATE.currency }); }
+  const r2 = v => Math.round((Number(v) || 0) * 100) / 100;
   const cell = (v, cls) => `<td class="px-2 py-1 text-right tabular-nums whitespace-nowrap ${cls || ""}">${v === null || v === undefined || v === "" ? "" : esc(v)}</td>`;
 
   function statementRowsHtml(rows, title, subtitle) {
@@ -88,7 +89,9 @@
       <div id="acctTabBody"></div>
     </div>`;
     host.querySelectorAll(".acct-tab").forEach(b => b.addEventListener("click", () => { STATE.tab = b.dataset.tab; renderResults(); }));
-    document.getElementById("acctTabBody").innerHTML = tabBody(m);
+    const body = document.getElementById("acctTabBody");
+    body.innerHTML = tabBody(m);
+    body.querySelectorAll("[data-cf]").forEach(b => b.addEventListener("click", () => { STATE.cfMethod = b.dataset.cf; save(); renderResults(); }));
   }
 
   function tabBody(m) {
@@ -100,8 +103,15 @@
         return statementRowsHtml(m.balanceSheet.rows, "Balance Sheet", STATE.period ? "As of " + STATE.period : "");
       case "equity-statement":
         return statementRowsHtml(m.equityStatement.rows, m.equityStatement.isCorp ? "Statement of Changes in Retained Earnings" : "Statement of Changes in Owner's Equity", sub);
-      case "cash-flow":
-        return statementRowsHtml(m.cashFlow.rows, "Statement of Cash Flows (Indirect Method)", sub);
+      case "cash-flow": {
+        const opts = [["indirect", "Indirect method"], ["direct", "Direct method"], ["both", "Both"]];
+        const toggle = `<div class="mb-3 flex gap-1.5 flex-wrap">${opts.map(([v, l]) =>
+          `<button data-cf="${v}" class="px-3 py-1 rounded-full border text-[11px] font-semibold ${STATE.cfMethod === v ? "bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900" : "bg-white dark:bg-zinc-900"}">${l}</button>`).join("")}</div>`;
+        const show = [];
+        if (STATE.cfMethod === "indirect" || STATE.cfMethod === "both") show.push(statementRowsHtml(m.cashFlow.rows, "Statement of Cash Flows (Indirect Method)", sub));
+        if (STATE.cfMethod === "direct" || STATE.cfMethod === "both") show.push(statementRowsHtml(m.cashFlowDirect.rows, "Statement of Cash Flows (Direct Method)", sub));
+        return toggle + `<div class="space-y-4">${show.join("")}</div>`;
+      }
       case "trial-balance": return trialBalanceHtml(m);
       case "worksheet": return worksheetHtml(m);
       case "ledger": return ledgerHtml(m);
@@ -184,11 +194,10 @@
           <tbody>${rows}</tbody>
         </table></div>`;
     }).join("");
-    const total = m.unadjustedTB ? null : null;
-    const d = m.entries.reduce((s, e) => s + e.debit, 0), c = m.entries.reduce((s, e) => s + e.credit, 0);
+    const d = r2(m.entries.reduce((s, e) => s + e.debit, 0)), c = r2(m.entries.reduce((s, e) => s + e.credit, 0));
     return `<div class="space-y-2">${entries}
       <div class="rounded-xl border p-3 flex justify-between text-[12px] font-bold bg-zinc-50 dark:bg-zinc-800/60">
-        <span>Total (${m.entries.length} entries)</span><span>${money(d)} &nbsp;=&nbsp; ${money(c)} ${total}</span></div></div>`;
+        <span>Total (${m.entries.length} entries)</span><span>${money(d)} &nbsp;=&nbsp; ${money(c)}</span></div></div>`;
   }
 
   function checksHtml(m) {
@@ -368,7 +377,7 @@
 
   function exportAll() {
     const m = STATE.model;
-    const parts = ["journal", "ledger", "trial-balance", "worksheet", "income-statement", "equity-statement", "balance-sheet", "cash-flow"];
+    const parts = ["journal", "ledger", "trial-balance", "worksheet", "income-statement", "equity-statement", "balance-sheet", "cash-flow", "cash-flow-direct"];
     if (!global.JSZip) { parts.forEach(exportCSV); return; }
     const zip = new global.JSZip();
     parts.forEach(p => zip.file(`${slug(STATE.company)}-${p}.csv`, A.statementToCSV(m, p)));
@@ -424,6 +433,7 @@
       ${block(m.equityStatement.rows, m.equityStatement.isCorp ? "Statement of Changes in Retained Earnings" : "Statement of Changes in Owner's Equity", sub)}
       ${block(m.balanceSheet.rows, "Statement of Financial Position (Balance Sheet)", STATE.period ? "As of " + esc(STATE.period) : "")}
       ${block(m.cashFlow.rows, "Statement of Cash Flows - Indirect Method", sub)}
+      ${block(m.cashFlowDirect.rows, "Statement of Cash Flows - Direct Method", sub)}
       ${tbHtml}
       <script>window.onload=function(){setTimeout(function(){window.print()},250)}<\/script>
       </body></html>`);
