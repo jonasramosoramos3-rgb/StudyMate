@@ -34,7 +34,7 @@
       <div><div class="font-extrabold tracking-tight">StudyMate</div><div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest -mt-1">All-in-One • Offline • Free</div></div>
     </div>
     <div class="flex items-center gap-2">
-      <div class="hidden lg:flex text-[11px] font-mono px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700"><span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block mr-2"></span>22 TOOLS • 0 UPLOAD</div>
+      <div class="hidden lg:flex text-[11px] font-mono px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700"><span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse inline-block mr-2"></span>23 TOOLS • 0 UPLOAD</div>
       <button id="installBtn" class="hidden px-4 py-2 rounded-full bg-indigo-600 text-white text-[12px] font-bold">⬇️ Install</button>
     </div>
   </div>
@@ -43,9 +43,9 @@
 <section class="max-w-[1400px] mx-auto px-4 md:px-6 pt-6 pb-6">
   <div class="rounded-[24px] bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 md:p-8 relative overflow-hidden">
     <div class="relative">
-      <div class="inline-flex px-3 py-1 rounded-full bg-white/20 border border-white/20 text-[11px] font-bold tracking-widest">✦ STUDY MATE V3 • 22 TOOLS • NEW UPGRADES</div>
+      <div class="inline-flex px-3 py-1 rounded-full bg-white/20 border border-white/20 text-[11px] font-bold tracking-widest">✦ STUDY MATE V4 • 23 TOOLS • NEW: ACCOUNTING WORKSHEET</div>
       <h1 class="mt-3 text-[28px] md:text-[40px] font-[800] leading-[0.95] tracking-tight">Your study buddy, now smarter.</h1>
-      <p class="mt-2 text-[13px] md:text-[14px] opacity-90 max-w-[700px]">Now with tool explanations, GWA screenshot scanner FIXED for your portal, Dictionary EN+Tagalog + Marketing terms, Thesaurus for ALL words, Audio converter, Paraphraser, and more. 22 tools offline. All offline.</p>
+      <p class="mt-2 text-[13px] md:text-[14px] opacity-90 max-w-[700px]">Now with tool explanations, GWA screenshot scanner FIXED for your portal, Dictionary EN+Tagalog + Marketing terms, Thesaurus for ALL words, Audio converter, Paraphraser, and the new Accounting Worksheet: paste a journal table and get the ledger, trial balance, worksheet, income statement, equity statement, balance sheet and cash flows. 23 tools offline.</p>
     </div>
   </div>
 </section>
@@ -92,6 +92,7 @@
           <button data-tool="docx-to-text" class="tool-card text-left p-2.5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 flex gap-2.5"><span class="w-8 h-8 rounded-lg bg-emerald-50 grid place-items-center">📝</span><div><div class="font-semibold text-[12px]">DOCX to Text</div><div class="text-[10px] text-zinc-500">Word extract</div></div></button>
           <button data-tool="txt-to-pdf" class="tool-card text-left p-2.5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 flex gap-2.5"><span class="w-8 h-8 rounded-lg bg-lime-50 grid place-items-center">📃</span><div><div class="font-semibold text-[12px]">Text to PDF</div><div class="text-[10px] text-zinc-500">MD → PDF</div></div></button>
           <button data-tool="csv-json" class="tool-card text-left p-2.5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 flex gap-2.5"><span class="w-8 h-8 rounded-lg bg-teal-50 grid place-items-center">🔄</span><div><div class="font-semibold text-[12px]">CSV ↔ JSON</div><div class="text-[10px] text-zinc-500">Data</div></div></button>
+          <button data-tool="accounting" class="tool-card text-left p-2.5 rounded-xl border-0 bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex gap-2.5"><span class="w-8 h-8 rounded-lg bg-white/20 grid place-items-center">🧾</span><div><div class="font-semibold text-[12px]">Accounting Worksheet</div><div class="text-[10px] opacity-80">Journal → Financial Statements</div></div></button>
           <button data-tool="base64" class="tool-card text-left p-2.5 rounded-xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 flex gap-2.5"><span class="w-8 h-8 rounded-lg bg-zinc-100 grid place-items-center">🔑</span><div><div class="font-semibold text-[12px]">Base64</div><div class="text-[10px] text-zinc-500">Encode</div></div></button>
         </div>
       </div>
@@ -136,8 +137,10 @@
   </div>
 </section>
 
-<footer class="border-t py-8"><div class="max-w-[1400px] mx-auto px-6 flex justify-between text-[11px] font-mono text-zinc-500"><div>StudyMate © 2026 — 22 tools offline, free forever.</div><div>PWA • MIT</div></div></footer>
+<footer class="border-t py-8"><div class="max-w-[1400px] mx-auto px-6 flex justify-between text-[11px] font-mono text-zinc-500"><div>StudyMate © 2026 — 23 tools offline, free forever.</div><div>PWA • MIT</div></div></footer>
 
+<script src="./accounting.js"></script>
+<script src="./accounting-ui.js"></script>
 <script src="./app.js"></script>
 <script>
 let deferredPrompt=null;const installBtn=document.getElementById('installBtn');

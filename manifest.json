@@ -1,7 +1,7 @@
 {
   "name": "StudyMate - All-in-One Student Toolkit",
   "short_name": "StudyMate",
-  "description": "StudyMate: File converter + OCR + GPA with FIXED screenshot OCR + Dictionary EN+Tagalog + Thesaurus ALL words + Audio converter + Paraphraser + Quiz Scanner. 100% offline, 24 tools, free forever.",
+  "description": "StudyMate: File converter + OCR + GPA + Paraphraser + Quiz Scanner + Accounting Worksheet (journal table to full financial statements). 100% offline, 23 tools, free forever.",
   "start_url": "./index.html",
   "display": "standalone",
   "display_override": [
@@ -32,6 +32,11 @@
     }
   ],
   "shortcuts": [
+    {
+      "name": "Accounting Worksheet",
+      "url": "./index.html",
+      "description": "Journal table to financial statements"
+    },
     {
       "name": "File Converter",
       "url": "./index.html",

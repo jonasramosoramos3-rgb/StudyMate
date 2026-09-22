@@ -1,9 +1,11 @@
 // StudyMate V4 Service Worker - Offline PWA
-const CACHE_NAME = 'studymate-v4';
+const CACHE_NAME = 'studymate-v5';
 const CORE_ASSETS = [
   './',
   './index.html',
   './app.js',
+  './accounting.js',
+  './accounting-ui.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
