@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinanceFlow — Automated Accounting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={
+  theme:{
+    extend:{
+      fontFamily:{sans:['Inter','sans-serif'], mono:['JetBrains Mono','monospace']},
+      colors:{
+        ink:{50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a'},
+        brand:{50:'#eef2ff',100:'#e0e7ff',500:'#6366f1',600:'#4f46e5',700:'#4338ca'}
+      }
+    }
+  }
+}
+</script>
+<style>
+  *{font-family:Inter,sans-serif}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .scroll::-webkit-scrollbar{width:6px;height:6px}
+  .scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+  .scroll::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+  .nav-active{background:#1e293b;color:white!important;box-shadow:0 4px 12px -4px rgba(0,0,0,.3)}
+  .nav-active .nav-icon{background:rgba(255,255,255,.15)}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .animate-in{animation:slideIn .25s ease}
+  .balanced{color:#059669}
+  .unbalanced{color:#dc2626}
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+</style>
+</head>
+<body class="bg-[#f8fafc] text-ink-800 min-h-screen overflow-hidden">
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  <aside class="w-[280px] bg-[#0f172a] text-slate-300 flex flex-col shrink-0 border-r border-slate-800/50">
+    <div class="h-[64px] px-5 flex items-center gap-3 border-b border-slate-800">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 grid place-items-center text-white font-black text-[14px]">FF</div>
+      <div>
+        <div class="font-bold text-white text-[14px] leading-none tracking-tight">FinanceFlow</div>
+        <div class="mono text-[10px] text-slate-400 uppercase tracking-widest mt-1">Double-Entry • GAAP</div>
+      </div>
+      <div class="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+    </div>
+
+    <div class="p-4 space-y-5 overflow-auto scroll flex-1">
+      <div class="rounded-xl bg-slate-800/50 border border-slate-700/50 p-3">
+        <div class="mono text-[10px] uppercase tracking-widest text-slate-400 font-bold">Company</div>
+        <div id="sideCompanyName" class="font-semibold text-white text-[13px] mt-1 truncate">My Company</div>
+        <div id="sideCompanyPeriod" class="mono text-[11px] text-slate-400 mt-0.5">FY 2025-2026</div>
+        <div class="mt-2 flex gap-1.5">
+          <span id="sideStatus" class="mono text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">BALANCED</span>
+          <span id="sideEntries" class="mono text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">0 entries</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="mono text-[10px] uppercase tracking-widest text-slate-500 font-bold px-2 mb-2">Accounting Cycle</div>
+        <nav class="space-y-1">
+          <button data-view="dashboard" class="nav-btn nav-active w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-white/10 grid place-items-center">📊</span> Dashboard
+          </button>
+          <button data-view="company" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">🏢</span> Company Setup
+          </button>
+          <button data-view="coa" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">📒</span> Chart of Accounts
+          </button>
+          <button data-view="journal" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">📝</span> Journal Entries
+            <span id="navJournalCount" class="ml-auto mono text-[11px] bg-slate-700 px-2 py-0.5 rounded-full">0</span>
+          </button>
+          <button data-view="ledger" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">📖</span> General Ledger
+          </button>
+          <button data-view="trial" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">⚖️</span> Trial Balance
+          </button>
+          <button data-view="adjusting" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">🔧</span> Adjusting Entries
+          </button>
+          <button data-view="statements" class="nav-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all">
+            <span class="nav-icon w-8 h-8 rounded-lg bg-slate-800 grid place-items-center">📈</span> Financial Statements
+          </button>
+        </nav>
+      </div>
+
+      <div class="rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 p-4 text-white relative overflow-hidden">
+        <div class="absolute -right-6 -top-6 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+        <div class="relative">
+          <div class="mono text-[10px] uppercase tracking-widest opacity-80 font-bold">Quick Actions</div>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <button onclick="app.exportAll()" class="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/20 border border-white/10 text-[11px] font-semibold text-left">⬇️ Export JSON</button>
+            <button onclick="app.copyAllJournals()" class="px-3 py-2 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 text-[11px] font-bold text-left">📋 Copy Journals</button>
+            <button onclick="app.newJournal()" class="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/20 border border-white/10 text-[11px] font-semibold text-left">+ New Entry</button>
+            <button onclick="document.getElementById('importFile').click()" class="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/20 border border-white/10 text-[11px] font-semibold text-left">⬆️ Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-2 text-[11px] mono text-slate-400">
+        <span class="w-2 h-2 bg-emerald-400 rounded-full"></span> Auto-saved locally • Offline
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+    <!-- Topbar -->
+    <div class="h-[64px] bg-white border-b border-ink-200 px-6 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-4">
+        <h1 id="viewTitle" class="font-bold text-[18px] tracking-tight">Dashboard</h1>
+        <span id="viewSubtitle" class="mono text-[12px] text-ink-500">Overview • All systems balanced</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="app.copyAllJournals()" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-ink-900 text-white text-[12px] font-bold hover:bg-black">
+          <span>📋</span> Copy All Journals
+        </button>
+        <button onclick="app.newJournal()" class="flex items-center gap-2 px-4 py-2 rounded-full bg-brand-600 text-white text-[12px] font-bold hover:bg-brand-700">
+          <span>+</span> New Journal Entry
+        </button>
+        <input id="importFile" type="file" accept=".json" class="hidden">
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto scroll p-6">
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="view space-y-6 animate-in">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="rounded-[20px] bg-white border border-ink-200 p-5">
+            <div class="flex justify-between items-start"><div class="mono text-[11px] uppercase font-bold text-ink-400">Total Assets</div><span class="w-8 h-8 rounded-full bg-emerald-50 grid place-items-center">💰</span></div>
+            <div id="dashAssets" class="mt-3 font-bold text-[22px] tracking-tight mono">$0.00</div>
+            <div class="mt-1 text-[12px] text-ink-500">Debit normal balance</div>
+          </div>
+          <div class="rounded-[20px] bg-white border border-ink-200 p-5">
+            <div class="flex justify-between items-start"><div class="mono text-[11px] uppercase font-bold text-ink-400">Total Liabilities</div><span class="w-8 h-8 rounded-full bg-amber-50 grid place-items-center">📄</span></div>
+            <div id="dashLiab" class="mt-3 font-bold text-[22px] tracking-tight mono">$0.00</div>
+            <div class="mt-1 text-[12px] text-ink-500">Credit normal balance</div>
+          </div>
+          <div class="rounded-[20px] bg-white border border-ink-200 p-5">
+            <div class="flex justify-between items-start"><div class="mono text-[11px] uppercase font-bold text-ink-400">Equity</div><span class="w-8 h-8 rounded-full bg-indigo-50 grid place-items-center">🏦</span></div>
+            <div id="dashEquity" class="mt-3 font-bold text-[22px] tracking-tight mono">$0.00</div>
+            <div class="mt-1 text-[12px] text-ink-500">Capital + Retained Earnings</div>
+          </div>
+          <div class="rounded-[20px] bg-[#0f172a] text-white p-5 border border-slate-800 relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl"></div>
+            <div class="relative">
+              <div class="mono text-[11px] uppercase font-bold text-slate-400">Net Income</div>
+              <div id="dashIncome" class="mt-3 font-bold text-[22px] tracking-tight mono">$0.00</div>
+              <div id="dashIncomeLabel" class="mt-1 text-[12px] text-slate-400">Revenue - Expenses</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-[1.2fr_.8fr] gap-6">
+          <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+            <div class="px-6 h-[56px] flex items-center justify-between border-b">
+              <div class="font-semibold text-[14px]">Recent Journal Entries</div>
+              <button onclick="app.switchView('journal')" class="mono text-[11px] px-3 py-1.5 rounded-full border hover:bg-ink-50">View all →</button>
+            </div>
+            <div id="dashRecent" class="divide-y"></div>
+          </div>
+          <div class="rounded-[20px] bg-white border border-ink-200 p-6">
+            <div class="font-semibold text-[14px]">Accounting Equation Check</div>
+            <div class="mt-4 space-y-3 mono text-[13px]">
+              <div class="flex justify-between p-3 rounded-xl bg-ink-50 border"><span>Assets</span><span id="eqAssets" class="font-bold">$0.00</span></div>
+              <div class="flex justify-between px-3"><span class="text-ink-500">= Liabilities + Equity</span></div>
+              <div class="flex justify-between p-3 rounded-xl bg-ink-50 border"><span id="eqLiabEquity">$0.00</span><span id="eqBalanced" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold">BALANCED ✓</span></div>
+              <div class="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-[12px] leading-[1.5]">
+                <b>Rule:</b> Debits = Credits always. Every transaction affects at least two accounts. Assets = Liabilities + Equity must hold.
+              </div>
+            </div>
+            <div class="mt-6">
+              <div class="font-semibold text-[13px]">Top Accounts by Balance</div>
+              <div id="dashTopAccounts" class="mt-3 space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPANY -->
+      <section id="view-company" class="view hidden space-y-6 animate-in max-w-[900px]">
+        <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-8 py-6 border-b bg-gradient-to-r from-ink-50 to-white">
+            <div class="flex items-start justify-between">
+              <div>
+                <h2 class="font-bold text-[18px] tracking-tight">Company Setup</h2>
+                <p class="mono text-[12px] text-ink-500 mt-1">This info appears on your financial statements. You can close this anytime — click any other tab to leave.</p>
+              </div>
+              <button onclick="app.switchView('dashboard')" class="px-4 py-2 rounded-full border bg-white text-[12px] font-bold hover:bg-ink-50">✕ Close & Go to Dashboard</button>
+            </div>
+          </div>
+          <div class="p-8 grid md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Company Legal Name</label><input id="compName" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Acme Corp."></div>
+              <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Address</label><input id="compAddress" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]" placeholder="123 Main St, City"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Currency</label><select id="compCurrency" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]"><option value="$">USD $</option><option value="₱">PHP ₱</option><option value="€">EUR €</option><option value="£">GBP £</option></select></div>
+                <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Fiscal Year End</label><input id="compFY" type="date" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]"></div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Period Start</label><input id="compStart" type="date" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]"></div>
+                <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Period End</label><input id="compEnd" type="date" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]"></div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="rounded-xl bg-ink-50 border p-4">
+                <div class="font-bold text-[13px]">Accounting Method</div>
+                <div class="mt-3 space-y-2">
+                  <label class="flex items-center gap-3 p-3 rounded-xl bg-white border cursor-pointer"><input type="radio" name="method" value="accrual" checked> <div><div class="font-semibold text-[13px]">Accrual (GAAP)</div><div class="text-[11px] text-ink-500">Revenue when earned, expenses when incurred</div></div></label>
+                  <label class="flex items-center gap-3 p-3 rounded-xl bg-white border cursor-pointer"><input type="radio" name="method" value="cash"> <div><div class="font-semibold text-[13px]">Cash Basis</div><div class="text-[11px] text-ink-500">Revenue when cash received</div></div></label>
+                </div>
+              </div>
+              <div class="rounded-xl bg-indigo-50 border border-indigo-200 p-4">
+                <div class="font-bold text-[13px] text-indigo-900">Preview on Financial Statements</div>
+                <div id="compPreview" class="mt-2 mono text-[12px] leading-[1.6] text-indigo-800 whitespace-pre-wrap"></div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="app.saveCompany()" class="px-6 py-2.5 rounded-full bg-ink-900 text-white font-bold text-[13px]">Save Company Info</button>
+                <button onclick="app.resetData()" class="px-5 py-2.5 rounded-full border bg-white text-[13px] font-semibold">Reset All Data</button>
+              </div>
+              <div class="mono text-[11px] text-ink-400">All data is stored locally in your browser. No server upload. Export JSON to backup.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHART OF ACCOUNTS -->
+      <section id="view-coa" class="view hidden space-y-4 animate-in">
+        <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-6 h-[64px] flex items-center justify-between border-b">
+            <div class="flex items-center gap-3">
+              <div class="font-bold text-[15px]">Chart of Accounts</div>
+              <span class="mono text-[11px] px-2.5 py-1 rounded-full bg-ink-100 border">GAAP • 5 Types • Double-Entry</span>
+              <input id="coaSearch" placeholder="Search code or name..." class="ml-4 w-[260px] px-4 py-2 rounded-full border border-ink-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="coaFilter" class="px-3 py-2 rounded-full border text-[12px] font-medium bg-white"><option value="all">All Types</option><option value="Asset">Assets</option><option value="Liability">Liabilities</option><option value="Equity">Equity</option><option value="Revenue">Revenue</option><option value="Expense">Expenses</option></select>
+              <button onclick="app.openAccountModal()" class="px-4 py-2 rounded-full bg-ink-900 text-white text-[12px] font-bold">+ New Account</button>
+            </div>
+          </div>
+          <div class="overflow-auto scroll">
+            <table class="w-full text-left">
+              <thead class="mono text-[11px] uppercase tracking-widest text-ink-400 border-b bg-ink-50/50">
+                <tr><th class="px-6 py-3 font-bold">Code</th><th class="px-4 py-3 font-bold">Account Name</th><th class="px-4 py-3 font-bold">Type</th><th class="px-4 py-3 font-bold">Normal</th><th class="px-4 py-3 font-bold text-right">Balance</th><th class="px-6 py-3 font-bold text-right">Action</th></tr>
+              </thead>
+              <tbody id="coaBody" class="divide-y text-[13px]"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- JOURNAL -->
+      <section id="view-journal" class="view hidden space-y-4 animate-in">
+        <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-6 h-[64px] flex items-center justify-between border-b flex-wrap gap-2">
+            <div class="flex items-center gap-3">
+              <div class="font-bold text-[15px]">Journal Entries</div>
+              <span id="journalCountBadge" class="mono text-[11px] px-2.5 py-1 rounded-full bg-ink-900 text-white">0 entries</span>
+              <span class="mono text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Debits = Credits ✓</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="journalSearch" placeholder="Search description, ref..." class="w-[220px] px-4 py-2 rounded-full border text-[13px]">
+              <button onclick="app.copyAllJournals()" class="px-4 py-2 rounded-full bg-ink-900 text-white text-[12px] font-bold flex items-center gap-1.5">📋 Copy All</button>
+              <button onclick="app.exportJournalsCSV()" class="px-4 py-2 rounded-full border bg-white text-[12px] font-bold">⬇️ CSV</button>
+              <button onclick="app.newJournal()" class="px-4 py-2 rounded-full bg-brand-600 text-white text-[12px] font-bold">+ New Entry</button>
+            </div>
+          </div>
+          <div class="overflow-auto scroll">
+            <table class="w-full text-left">
+              <thead class="mono text-[11px] uppercase tracking-widest text-ink-400 border-b bg-ink-50/50">
+                <tr><th class="px-6 py-3 font-bold">Date</th><th class="px-3 py-3 font-bold">Ref</th><th class="px-3 py-3 font-bold">Description</th><th class="px-3 py-3 font-bold text-right">Debit</th><th class="px-3 py-3 font-bold text-right">Credit</th><th class="px-3 py-3 font-bold">Status</th><th class="px-6 py-3 font-bold text-right">Actions</th></tr>
+              </thead>
+              <tbody id="journalBody" class="divide-y text-[13px]"></tbody>
+            </table>
+          </div>
+          <div class="p-4 bg-ink-50 border-t mono text-[11px] text-ink-500 flex justify-between">
+            <span>💡 Click any row to view details. All entries are automatically saved to localStorage — they will NOT disappear.</span>
+            <span id="journalTotal" class="font-bold text-ink-700"></span>
+          </div>
+        </div>
+
+        <div class="rounded-[16px] bg-amber-50 border border-amber-200 p-4 mono text-[12px] leading-[1.6]">
+          <b>How to copy:</b> Click "📋 Copy All" to copy every journal entry in formatted text (Date | Ref | Account | Debit | Credit | Memo) to clipboard. Also works from sidebar. Use CSV export for Excel.
+        </div>
+      </section>
+
+      <!-- LEDGER -->
+      <section id="view-ledger" class="view hidden space-y-4 animate-in">
+        <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-6 h-[64px] flex items-center justify-between border-b">
+            <div class="flex items-center gap-3">
+              <div class="font-bold text-[15px]">General Ledger</div>
+              <select id="ledgerAccount" class="px-4 py-2 rounded-full border bg-white text-[13px] font-medium min-w-[280px]"></select>
+              <span class="mono text-[11px] px-2.5 py-1 rounded-full bg-ink-100 border" id="ledgerType">—</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="mono text-[11px] text-ink-500">Click an account in Chart of Accounts to jump here</span>
+            </div>
+          </div>
+          <div class="grid lg:grid-cols-[320px_1fr] divide-x">
+            <div class="p-4 space-y-2 max-h-[600px] overflow-auto scroll">
+              <div class="mono text-[11px] uppercase font-bold text-ink-400 px-2">All Accounts (click to preview)</div>
+              <div id="ledgerList" class="space-y-1"></div>
+            </div>
+            <div class="overflow-auto scroll">
+              <div id="ledgerDetail" class="p-0">
+                <div class="p-12 text-center text-ink-400 mono text-[13px]">Select an account to see its ledger — transactions will show here and won't disappear.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRIAL BALANCE -->
+      <section id="view-trial" class="view hidden space-y-4 animate-in">
+        <div class="grid lg:grid-cols-[1.1fr_.9fr] gap-6">
+          <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+            <div class="px-6 h-[56px] flex items-center justify-between border-b">
+              <div class="font-bold text-[14px]">Trial Balance — <span id="trialDate" class="mono font-normal text-ink-500"></span></div>
+              <span id="trialBalanced" class="mono text-[11px] px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold border border-emerald-200">BALANCED</span>
+            </div>
+            <div class="overflow-auto scroll max-h-[700px]">
+              <table class="w-full text-left">
+                <thead class="mono text-[11px] uppercase tracking-widest text-ink-400 border-b bg-ink-50/50 sticky top-0"><tr><th class="px-6 py-3">Account</th><th class="px-4 py-3 text-right">Debit</th><th class="px-4 py-3 text-right">Credit</th></tr></thead>
+                <tbody id="trialBody" class="divide-y mono text-[13px]"></tbody>
+                <tfoot class="bg-ink-900 text-white font-bold mono text-[13px]"><tr><td class="px-6 py-3">TOTALS</td><td id="trialDebitTotal" class="px-4 py-3 text-right">$0.00</td><td id="trialCreditTotal" class="px-4 py-3 text-right">$0.00</td></tr></tfoot>
+              </table>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="rounded-[20px] bg-white border border-ink-200 p-6">
+              <div class="font-bold text-[14px]">Adjusted Trial Balance</div>
+              <p class="mono text-[12px] text-ink-500 mt-1">Includes adjusting entries. If you have no adjusting entries, it matches Trial Balance.</p>
+              <div class="mt-4 overflow-auto scroll max-h-[400px] border rounded-xl">
+                <table class="w-full text-left"><thead class="mono text-[10px] uppercase tracking-widest text-ink-400 border-b bg-ink-50"><tr><th class="px-4 py-2">Account</th><th class="px-3 py-2 text-right">Debit</th><th class="px-3 py-2 text-right">Credit</th></tr></thead><tbody id="adjTrialBody" class="divide-y mono text-[12px]"></tbody></table>
+              </div>
+              <div class="mt-3 flex justify-between mono text-[12px] font-bold"><span>Total</span><span id="adjTotals"></span></div>
+            </div>
+            <div class="rounded-[20px] bg-[#0f172a] text-white p-6 border border-slate-800">
+              <div class="font-bold text-[13px]">Accounting Rules Check</div>
+              <div id="rulesCheck" class="mt-3 space-y-2 mono text-[12px] leading-[1.5]"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADJUSTING -->
+      <section id="view-adjusting" class="view hidden space-y-4 animate-in max-w-[1000px]">
+        <div class="rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-6 py-5 border-b">
+            <div class="font-bold text-[16px]">Adjusting Entries</div>
+            <p class="mono text-[12px] text-ink-500 mt-1">Record accruals, deferrals, depreciation, and other period-end adjustments. These flow into Adjusted Trial Balance and Financial Statements.</p>
+          </div>
+          <div class="p-6 grid md:grid-cols-2 gap-3">
+            <button onclick="app.quickAdjust('depreciation')" class="text-left p-4 rounded-xl border hover:border-brand-300 hover:bg-brand-50 transition-all"><div class="font-bold text-[13px]">📉 Depreciation Expense</div><div class="mono text-[11px] text-ink-500 mt-1">Dr Depreciation Expense / Cr Accum. Depreciation</div></button>
+            <button onclick="app.quickAdjust('accrued-salaries')" class="text-left p-4 rounded-xl border hover:border-brand-300 hover:bg-brand-50 transition-all"><div class="font-bold text-[13px]">👥 Accrued Salaries</div><div class="mono text-[11px] text-ink-500 mt-1">Dr Salaries Expense / Cr Salaries Payable</div></button>
+            <button onclick="app.quickAdjust('prepaid')" class="text-left p-4 rounded-xl border hover:border-brand-300 hover:bg-brand-50 transition-all"><div class="font-bold text-[13px]">📅 Prepaid Rent Used</div><div class="mono text-[11px] text-ink-500 mt-1">Dr Rent Expense / Cr Prepaid Expenses</div></button>
+            <button onclick="app.quickAdjust('unearned')" class="text-left p-4 rounded-xl border hover:border-brand-300 hover:bg-brand-50 transition-all"><div class="font-bold text-[13px]">💳 Unearned Revenue Earned</div><div class="mono text-[11px] text-ink-500 mt-1">Dr Unearned Revenue / Cr Service Revenue</div></button>
+          </div>
+          <div class="px-6 pb-6">
+            <div class="font-semibold text-[13px]">All Adjusting Entries</div>
+            <div id="adjustingList" class="mt-3 divide-y border rounded-xl overflow-hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATEMENTS -->
+      <section id="view-statements" class="view hidden space-y-6 animate-in">
+        <div class="flex gap-2 overflow-auto scroll pb-1">
+          <button data-stmt="income" class="stmt-tab px-4 py-2 rounded-full bg-ink-900 text-white mono text-[12px] font-bold">Income Statement</button>
+          <button data-stmt="retained" class="stmt-tab px-4 py-2 rounded-full border bg-white mono text-[12px] font-bold">Retained Earnings</button>
+          <button data-stmt="balance" class="stmt-tab px-4 py-2 rounded-full border bg-white mono text-[12px] font-bold">Balance Sheet</button>
+          <button data-stmt="cashflow" class="stmt-tab px-4 py-2 rounded-full border bg-white mono text-[12px] font-bold">Cash Flow</button>
+        </div>
+
+        <div id="stmt-income" class="stmt-view rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-8 py-6 border-b flex justify-between items-start">
+            <div><div id="incCompany" class="font-bold text-[16px]"></div><div class="mono text-[12px] text-ink-500">Income Statement</div><div id="incPeriod" class="mono text-[11px] text-ink-400 mt-1"></div></div>
+            <button onclick="app.printStatement('income')" class="px-4 py-2 rounded-full border mono text-[11px] font-bold">🖨️ Print / Save PDF</button>
+          </div>
+          <div id="incomeBody" class="p-8 mono text-[13px] leading-[1.8]"></div>
+        </div>
+
+        <div id="stmt-retained" class="stmt-view hidden rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-8 py-6 border-b"><div id="retCompany" class="font-bold text-[16px]"></div><div class="mono text-[12px] text-ink-500">Statement of Retained Earnings</div><div id="retPeriod" class="mono text-[11px] text-ink-400 mt-1"></div></div>
+          <div id="retainedBody" class="p-8 mono text-[13px] leading-[1.8]"></div>
+        </div>
+
+        <div id="stmt-balance" class="stmt-view hidden rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-8 py-6 border-b flex justify-between"><div><div id="balCompany" class="font-bold text-[16px]"></div><div class="mono text-[12px] text-ink-500">Balance Sheet</div><div id="balPeriod" class="mono text-[11px] text-ink-400 mt-1"></div></div><span id="balBalanced" class="mono text-[11px] px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold h-fit">BALANCED</span></div>
+          <div id="balanceBody" class="p-8 mono text-[13px] leading-[1.8]"></div>
+        </div>
+
+        <div id="stmt-cashflow" class="stmt-view hidden rounded-[20px] bg-white border border-ink-200 overflow-hidden">
+          <div class="px-8 py-6 border-b"><div id="cashCompany" class="font-bold text-[16px]"></div><div class="mono text-[12px] text-ink-500">Statement of Cash Flows (Indirect Method)</div><div id="cashPeriod" class="mono text-[11px] text-ink-400 mt-1"></div></div>
+          <div id="cashBody" class="p-8 mono text-[13px] leading-[1.8]"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Journal Modal -->
+<div id="journalModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="app.closeJournalModal()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="w-full max-w-[880px] bg-white rounded-[24px] shadow-2xl border overflow-hidden animate-in max-h-[90vh] flex flex-col">
+      <div class="px-7 h-[64px] flex items-center justify-between border-b shrink-0">
+        <div><div class="font-bold text-[15px]">New Journal Entry</div><div class="mono text-[11px] text-ink-500">Double-entry • Debits must equal Credits</div></div>
+        <button onclick="app.closeJournalModal()" class="w-8 h-8 rounded-full border grid place-items-center hover:bg-ink-50">✕</button>
+      </div>
+      <div class="flex-1 overflow-auto scroll p-6 space-y-4">
+        <div class="grid md:grid-cols-[160px_160px_1fr] gap-3">
+          <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Date</label><input id="jDate" type="date" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]"></div>
+          <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Ref # (auto)</label><input id="jRef" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 mono text-[14px] bg-ink-50"></div>
+          <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Description / Memo</label><input id="jDesc" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-ink-200 text-[14px]" placeholder="e.g., Initial investment by owner"></div>
+        </div>
+
+        <div class="rounded-xl border overflow-hidden">
+          <div class="grid grid-cols-[1.6fr_.7fr_.7fr_1fr_40px] gap-0 mono text-[11px] uppercase font-bold tracking-widest text-ink-400 bg-ink-50 border-b px-4 py-2.5">
+            <div>Account (search code or name)</div><div class="text-right">Debit</div><div class="text-right">Credit</div><div>Memo</div><div></div>
+          </div>
+          <div id="jLines" class="divide-y"></div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <button onclick="app.addJournalLine()" class="px-4 py-2 rounded-full border bg-white mono text-[12px] font-bold hover:bg-ink-50">+ Add Line</button>
+          <div class="flex items-center gap-4 mono text-[13px]">
+            <div class="flex items-center gap-2"><span class="text-ink-500">Debit Total:</span><span id="jDebitTotal" class="font-bold">$0.00</span></div>
+            <div class="flex items-center gap-2"><span class="text-ink-500">Credit Total:</span><span id="jCreditTotal" class="font-bold">$0.00</span></div>
+            <span id="jBalanceStatus" class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold border border-amber-200">UNBALANCED</span>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-ink-50 border p-3 mono text-[11px] leading-[1.5] text-ink-600">
+          <b>Accounting Rule:</b> Every journal entry must have equal debits and credits. Assets & Expenses increase with Debit, Liabilities, Equity & Revenue increase with Credit. The entry will be saved to localStorage and appear instantly in Ledger, Trial Balance, and Financial Statements.
+        </div>
+      </div>
+      <div class="px-7 py-4 border-t bg-ink-50 flex justify-between items-center shrink-0">
+        <div class="mono text-[11px] text-ink-500">This entry will NOT disappear — it's persisted automatically.</div>
+        <div class="flex gap-2">
+          <button onclick="app.closeJournalModal()" class="px-5 py-2.5 rounded-full border bg-white mono text-[12px] font-bold">Cancel</button>
+          <button id="jPostBtn" onclick="app.postJournal()" class="px-6 py-2.5 rounded-full bg-ink-900 text-white mono text-[12px] font-bold disabled:opacity-40 disabled:cursor-not-allowed">Post Entry ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Account Modal -->
+<div id="accountModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="app.closeAccountModal()"></div>
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div class="w-full max-w-[520px] bg-white rounded-[20px] shadow-2xl border overflow-hidden animate-in">
+      <div class="px-6 h-[56px] flex items-center justify-between border-b"><div class="font-bold text-[14px]">New Account</div><button onclick="app.closeAccountModal()" class="w-8 h-8 rounded-full border grid place-items-center">✕</button></div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-[120px_1fr] gap-3"><div><label class="mono text-[11px] uppercase font-bold text-ink-500">Code</label><input id="aCode" class="mt-1 w-full px-4 py-2.5 rounded-xl border text-[14px] mono" placeholder="1000"></div><div><label class="mono text-[11px] uppercase font-bold text-ink-500">Name</label><input id="aName" class="mt-1 w-full px-4 py-2.5 rounded-xl border text-[14px]" placeholder="Cash"></div></div>
+        <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Type</label><select id="aType" class="mt-1 w-full px-4 py-2.5 rounded-xl border text-[14px]"><option value="Asset">Asset (1000-1999)</option><option value="Liability">Liability (2000-2999)</option><option value="Equity">Equity (3000-3999)</option><option value="Revenue">Revenue (4000-4999)</option><option value="Expense">Expense (5000-5999)</option></select></div>
+        <div><label class="mono text-[11px] uppercase font-bold text-ink-500">Opening Balance (optional)</label><input id="aBalance" type="number" step="0.01" class="mt-1 w-full px-4 py-2.5 rounded-xl border text-[14px] mono" placeholder="0.00"></div>
+        <div class="rounded-xl bg-ink-50 border p-3 mono text-[11px]">Normal balance is auto-set: Assets & Expenses = Debit, Liabilities, Equity & Revenue = Credit.</div>
+      </div>
+      <div class="px-6 py-4 border-t bg-ink-50 flex justify-end gap-2"><button onclick="app.closeAccountModal()" class="px-5 py-2 rounded-full border bg-white mono text-[12px] font-bold">Cancel</button><button onclick="app.saveAccount()" class="px-6 py-2 rounded-full bg-ink-900 text-white mono text-[12px] font-bold">Save Account</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-[60] hidden"><div class="px-5 py-3 rounded-full bg-ink-900 text-white mono text-[12px] font-bold shadow-xl flex items-center gap-2"><span id="toastIcon">✓</span><span id="toastMsg">Saved</span></div></div>
+
+<script src="./app.js"></script>
+</body>
+</html>
