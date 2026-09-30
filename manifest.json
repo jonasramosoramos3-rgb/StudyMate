@@ -1,22 +1,11 @@
 {
-  "name": "StudyMate - All-in-One Student Toolkit",
-  "short_name": "StudyMate",
-  "description": "StudyMate: File converter + OCR + GPA with FIXED screenshot OCR + Dictionary EN+Tagalog + Thesaurus ALL words + Audio converter + Paraphraser + Quiz Scanner. 100% offline, 24 tools, free forever.",
+  "name": "FinanceFlow — Automated Accounting System",
+  "short_name": "FinanceFlow",
+  "description": "Full GAAP double-entry accounting: Journal → Ledger → Trial Balance → Financial Statements. Offline, persistent, copy-all journals.",
   "start_url": "./index.html",
   "display": "standalone",
-  "display_override": [
-    "window-controls-overlay",
-    "standalone",
-    "browser"
-  ],
-  "background_color": "#fcfcff",
-  "theme_color": "#4f46e5",
-  "orientation": "any",
-  "categories": [
-    "education",
-    "productivity",
-    "utilities"
-  ],
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "./icon-192.png",
@@ -29,23 +18,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "File Converter",
-      "url": "./index.html",
-      "description": "Convert any file offline"
-    },
-    {
-      "name": "ID Photo Maker",
-      "url": "./index.html",
-      "description": "Make 2x2 ID photos"
-    },
-    {
-      "name": "Study Tools",
-      "url": "./index.html",
-      "description": "GPA, Citation, Flashcards"
     }
   ]
 }
