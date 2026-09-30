@@ -1,6 +1,6 @@
 {
-  "name": "LedgerFlow — Automated Accounting System",
-  "short_name": "LedgerFlow",
+  "name": "FinanceFlow — Automated Accounting System",
+  "short_name": "FinanceFlow",
   "description": "Full GAAP double-entry accounting: Journal → Ledger → Trial Balance → Financial Statements. Offline, persistent, copy-all journals.",
   "start_url": "./index.html",
   "display": "standalone",

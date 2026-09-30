@@ -1,4 +1,4 @@
-// LedgerFlow - Complete Automated Accounting System - GAAP Double Entry
+// FinanceFlow - Complete Automated Accounting System - GAAP Double Entry
 // Fixed issues: persistence, accounts preview, journal posting, company modal closable, copy all journals
 
 const DEFAULT_ACCOUNTS = [
@@ -35,7 +35,7 @@ const DEFAULT_ACCOUNTS = [
 
 class LedgerApp {
   constructor(){
-    this.storageKey='ledgerflow_v2';
+    this.storageKey='financeflow_v1';
     this.company = {
       name:'Acme Corporation',
       address:'123 Business Ave, New York, NY 10001',
